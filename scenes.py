@@ -18,15 +18,26 @@ class Scene:
     def render(self):
         pass
 
+    def killUnit(self, units):
+        i = 0
+        unitCount = len(units)
+        while (i < unitCount):
+            if (units[i].isKilled):
+                unitCount -= 1
+                units.pop(i)
+            else:
+                i += 1
+
 class RunningScene(Scene):
     def __init__(self, screen: Surface) -> None:
         super().__init__(screen)
 
-        self.player = Player(self, gravity=Vecotr(0, 120), jumpForce=60)
+        self.grounds = []
+        self.items = []
+
+        self.player = Player(self.grounds, gravity=Vecotr(0, 120), jumpForce=60)
         self.player.position = Vecotr(5, (self.screen.height - 8)*2)
         self.speed = 15
-
-        self.grounds = []
 
         ground = Ground(self, "[]", 70, 3)
         ground.position = Vecotr(0, (self.screen.height - ground.height//2 - 3) * 2)
@@ -39,15 +50,12 @@ class RunningScene(Scene):
         
         for ground in self.grounds:
             ground.update(deltaTime)
+        
+        for item in self.items:
+            item.update(deltaTime)
 
-        i = 0
-        groundCount = len(self.grounds)
-        while (i < groundCount):
-            if (self.grounds[i].isKilled):
-                groundCount -= 1
-                self.grounds.pop(i)
-            else:
-                i += 1
+        self.killUnit(self.grounds)
+        self.killUnit(self.items)
     
     def inputKey(self, deltaTime: float):
         if (getPressedKey(VirtualKey.RIGHT)):
@@ -65,6 +73,9 @@ class RunningScene(Scene):
 
         for ground in self.grounds:
             ground.draw(self.screen)
+
+        for item in self.items:
+            item.draw(self.screen)
 
         self.player.draw(self.screen, False)
 
