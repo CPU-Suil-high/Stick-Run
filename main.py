@@ -8,7 +8,7 @@ from scenes import *
 WIDTH = 120
 HEIGHT = 30
 
-FPS = 80
+FPS = 60
 
 def main():
     global screen, copyScreen
