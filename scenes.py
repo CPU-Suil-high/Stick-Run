@@ -34,14 +34,15 @@ class RunningScene(Scene):
 
         self.grounds = []
         self.items = []
+        self.obstacles = []
 
-        self.player = Player(self.grounds, gravity=Vecotr(0, 120), jumpForce=60)
+        self.player = Player(self.grounds, gravity=120, jumpForce=65)
         self.player.position = Vecotr(5, (self.screen.height - 8)*2)
         self.speed = 15
 
-        ground = Ground(self, "[]", 70, 3)
-        ground.position = Vecotr(0, (self.screen.height - ground.height//2 - 3) * 2)
-        ground.velocity = Vecotr(-15, 0)
+        ground = Ground(self, "[]", 58, 3)
+        ground.position = Vecotr(0, (self.screen.height - ground.height//2 - 1) * 2)
+        ground.velocity = Vecotr(-20, 0)
 
         self.grounds.append(ground)
 
@@ -50,9 +51,21 @@ class RunningScene(Scene):
         
         for ground in self.grounds:
             ground.update(deltaTime)
+
+            if (ground.position.x + ground.width < 0):
+                ground.kill()
         
         for item in self.items:
             item.update(deltaTime)
+
+            if (item.position.x + item.width < 0):
+                item.kill()
+        
+        for obstacle in self.obstacles:
+            obstacle.update(deltaTime)
+
+            if (obstacle.position.x + obstacle.width < 0):
+                obstacle.kill()
 
         self.killUnit(self.grounds)
         self.killUnit(self.items)
@@ -76,6 +89,9 @@ class RunningScene(Scene):
 
         for item in self.items:
             item.draw(self.screen)
+        
+        for obstacle in self.obstacles:
+            obstacle.draw(self.screen)
 
         self.player.draw(self.screen, False)
 

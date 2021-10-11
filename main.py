@@ -36,6 +36,7 @@ def init():
 
     screen = Surface(WIDTH, HEIGHT)
     copyScreen = Surface(WIDTH, HEIGHT)
+    copyScreen.fill("*")
     
     previousTime = time.time()
     delayTime = 1/FPS
@@ -69,6 +70,7 @@ def updateDisplay():
                     gotoxy(j, i)
                     printf("  ")
                     gotoxy(j, i)
+                    setColor(char.textColor, char.backgroundColor)
                     printf(char.byte)
                     printf(screen.image[i][j+1].byte)
                 else:
@@ -86,9 +88,10 @@ def updateDisplay():
                     printf(" ")
                 
                 gotoxy(j, i)
+                setColor(char.textColor, char.backgroundColor)
                 printf(char.byte)
 
-            copyScreen.image[i][j] = screen.image[i][j]
+            copyScreen.image[i][j] = screen.image[i][j].clone()
 
 def delay() -> float:
     global previousTime, delayTime

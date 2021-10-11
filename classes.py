@@ -1,3 +1,4 @@
+from functions import Color
 class Surface:
     def __init__(self, width:int, height:int) -> None:
         self.width = width
@@ -11,8 +12,20 @@ class Surface:
         
         for i in range(self.height):
             for j in range(self.width):
-                self.image[i][j] = Char(char.encode("cp949"), False, False)
+                self.image[i][j].byte = char.encode("cp949")
+                self.image[i][j].start = False
+                self.image[i][j].end = False
     
+    def fillColor(self, textColor:Color, backgroundColor:Color, x:int=0, y:int=0, width:int=100, height:int=100):
+        for i in range(y, self.height):
+            if (i >= y + height):
+                break
+            for j in range(x, self.width):
+                if (j >= x + width):
+                    break
+                self.image[i][j].textColor = textColor
+                self.image[i][j].backgroundColor = backgroundColor
+
     def blit(self, surface, x:int, y:int, space:bool=True):
         for i in range(surface.height):
             if (y + i < 0):
@@ -26,7 +39,7 @@ class Surface:
                 elif (x + j >= self.width):
                     break
                 
-                self.image[y + i][x + j] = surface.image[i][j]
+                self.image[y + i][x + j] = surface.image[i][j].clone()
     
     def setImage(self, string:str):
         image = []
@@ -48,18 +61,33 @@ class Surface:
                 if (len(image[i]) <= j):
                     break
                 self.image[i][j] = image[i][j]
+    
+    def clone(self):
+        surface = Surface(self.width, self.height)
+
+        for i in range(self.height):
+            for j in range(self.width):
+                surface.image[i][j] = self.image[i][j].clone()
+        
+        return surface
 
 class Char:
-    def __init__(self, byte:bytes, start:bool = False, end:bool = False) -> None:
+    def __init__(self, byte:bytes, start:bool = False, end:bool = False, textColor: Color=Color.DEFAULT_TEXT_COLOR, backgroundColor: Color=Color.DEFAULT_BACKGROUND_COLOR) -> None:
         if (len(byte) != 1):
             raise "byte'len must be 1"
 
         self.byte = byte
         self.start = start
         self.end = end
+
+        self.textColor = textColor
+        self.backgroundColor = backgroundColor
+    
+    def clone(self):
+        return Char(self.byte, self.start, self.end, self.textColor, self.backgroundColor)
     
     def __eq__(self, other) -> bool:
-        if (self.byte == other.byte and self.start == other.start and self.end == other.end):
+        if (self.byte == other.byte and self.start == other.start and self.end == other.end and self.textColor == other.textColor and self.backgroundColor == other.backgroundColor):
             return True
         else:
             return False

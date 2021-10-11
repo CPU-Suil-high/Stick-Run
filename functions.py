@@ -22,7 +22,7 @@ class Color:
     DARK_SKYBLUE = 3
     DARK_RED = 4
     DARK_VOILET = 5
-    DAKR_YELLOW = 6
+    DARK_YELLOW = 6
     GRAY = 7
     DARK_GRAY = 8
     BLUE = 9
@@ -32,6 +32,8 @@ class Color:
     VIOLET = 13
     YELLOW = 14
     WHITE = 15
+    DEFAULT_TEXT_COLOR = WHITE
+    DEFAULT_BACKGROUND_COLOR = BLACK
 
 class VirtualKey:
     LBUTTON = 0x01

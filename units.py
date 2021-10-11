@@ -44,11 +44,11 @@ class Unit:
             return False
 
 class AnimationUnit(Unit):
-    def __init__(self, surface: Surface, images: List[str], animationSpeed) -> None:
+    def __init__(self, surface: Surface, surfaces: List[Surface], animationSpeed) -> None:
         super().__init__(surface)
-        self.images = images
-        self.imageIndex = 0
-        self.maxImageIndex = len(self.images)
+        self.surfaces = surfaces
+        self.surfaceIndex = 0
+        self.maxSurfaceIndex = len(self.surfaces)
         self.animationSpeed = animationSpeed
     
     def update(self, deltaTime):
@@ -56,48 +56,50 @@ class AnimationUnit(Unit):
         self.animation(deltaTime)
     
     def animation(self, deltaTime):
-        self.imageIndex += self.animationSpeed * deltaTime
+        self.surfaceIndex += self.animationSpeed * deltaTime
 
-        while (self.imageIndex >= self.maxImageIndex):
-            self.imageIndex -= self.maxImageIndex
+        while (self.surfaceIndex >= self.maxSurfaceIndex):
+            self.surfaceIndex -= self.maxSurfaceIndex
         
-        self.surface.fill(" ")
-        self.surface.setImage(self.images[int(self.imageIndex)])
+        self.surface = self.surfaces[int(self.surfaceIndex)].clone()
 
 class Player(AnimationUnit):
-    def __init__(self, grounds: "List[Ground]", gravity: Vecotr = Vecotr(), jumpForce : float = 0, score: int=0) -> None:
-        images = ["""\
+    def __init__(self, grounds: "List[Ground]", maxHealth: int=10, gravity: int = 0, jumpForce : float = 0, score: int=0) -> None:
+        surfaces = [Surface(6, 5) for _ in range(4)]
+        surfaces[0].setImage("""\
  _O_\\   
 \\ |   
   |    
  / \\
 /   \\ 
-""", """\
+""")
+        surfaces[1].setImage("""\
   O    
  /|\\/   
  \\|    
   |\\     
  /  |   
-""", """\
+""")
+        surfaces[2].setImage("""\
   O    
   |__   
   |    
   |   
   |  
-""", """\
+""")
+        surfaces[3].setImage("""\
   O    
  /|\\/   
  \\|   
   |\\  
  /  |   
-"""]
+""")
 
         surface = Surface(6, 5)
-        surface.setImage(images[0])
 
         animationSpeed = 4
 
-        super().__init__(surface, images, animationSpeed)
+        super().__init__(surface, surfaces, animationSpeed)
 
         self.grounds = grounds
 
@@ -108,10 +110,12 @@ class Player(AnimationUnit):
         self.maxJumpCount = 2
 
         self.score = score
+        self.maxHealth = maxHealth
+        self.health = maxHealth
     
     def update(self, deltaTime):
         super().update(deltaTime)
-        self.velocity += self.gravity * deltaTime
+        self.velocity.y += self.gravity * deltaTime
 
         for ground in self.grounds:
             if (self.checkCollision(ground)):
@@ -119,7 +123,7 @@ class Player(AnimationUnit):
                 self.velocity = Vecotr(self.velocity.x, 0)
                 self.jumpCount = self.maxJumpCount
         
-        self.surface.setImage(f"{self.score}")
+        self.surface.setImage(f"{self.health}")
     
     def inputKey(self, deltaTime):
         state = getAsyncKeyState(VirtualKey.SPACE)
@@ -139,6 +143,10 @@ class Player(AnimationUnit):
 
     def addScore(self, score: int):
         self.score += score
+    
+    def addDamage(self, damage: int):
+        self.health -= damage
+
 class Ground(Unit):
     def __init__(self, scene, patten: str="@", width: int=5, height: int=3) -> None:
         surface = Surface(width, height)
@@ -151,6 +159,9 @@ class Ground(Unit):
 
         self.patten = patten
 
+        self.surface.fillColor(Color.DARK_GREEN, Color.DEFAULT_BACKGROUND_COLOR, x=0, y=0, width=width, height=1)
+        self.surface.fillColor(Color.DARK_YELLOW, Color.DEFAULT_BACKGROUND_COLOR, x=0, y=1, width=width, height=height-1)
+
         self.isWaitingToSummon = True
     
     def update(self, deltaTime):
@@ -159,9 +170,6 @@ class Ground(Unit):
         if (self.isWaitingToSummon and self.position.x < self.scene.screen.width):
             self.summonNextGround()
 
-        if (self.position.x + self.width < 0):
-            self.kill()
-
     def summonNextGround(self):
         ground = Ground(self.scene, self.patten, width=self.width, height=self.height//2)
         ground.position = self.position + Vecotr(self.width + random.randint(0, 1)*15, 0)
@@ -169,9 +177,22 @@ class Ground(Unit):
 
         self.grounds.append(ground)
 
+        obstacleClass = random.choice((Tree, Stone))
+
+        obstacle = obstacleClass(self.scene.player)
+
+        obstacle.position = ground.position + Vecotr(ground.width/2 - obstacle.width/2, - obstacle.height)
+        obstacle.velocity = self.velocity
+
+        self.scene.obstacles.append(obstacle)
+
         for i in range(1, ground.width, 3):
             coin = Coin(self.scene.player)
             coin.position = ground.position + Vecotr(i, -6)
+            
+            if (coin.checkCollision(obstacle)):
+                continue
+
             coin.velocity = self.velocity
             coin.imageIndex = (ground.width - i)*0.05
             self.scene.items.append(coin)
@@ -193,11 +214,11 @@ class Ground(Unit):
 
         for i in range(self.width):
             for j in range(self.height//2):
-                self.surface.image[j][i] = temp[i % tempCount]
+                self.surface.image[j][i] = temp[i % tempCount].clone()
 
-class Item(AnimationUnit):
-    def __init__(self, surface: Surface, images: List[str], animationSpeed: int, player: Player, score: int=0) -> None:
-        super().__init__(surface, images, animationSpeed)
+class Item(Unit):
+    def __init__(self, surface: Surface, player: Player, score: int=0) -> None:
+        super().__init__(surface)
 
         self.player = player
         self.score = score
@@ -213,13 +234,58 @@ class Coin(Item):
     def __init__(self, player: Player) -> None:
         score = 1
 
-        images = ["""\
-$
-"""]
-
         surface = Surface(1, 1)
-        surface.setImage(images[0])
-
-        animationSpeed = 0
+        surface.setImage("$")
+        surface.fillColor(Color.YELLOW, Color.DEFAULT_BACKGROUND_COLOR)
         
-        super().__init__(surface, images, animationSpeed, player, score=score)
+        super().__init__(surface, player, score=score)
+
+class Obstacle(Unit):
+    def __init__(self, surface: Surface, player: Player, damage: int = 0) -> None:
+        super().__init__(surface)
+
+        self.player = player
+        self.damage = damage
+    
+    def update(self, deltaTime):
+        super().update(deltaTime)
+        
+        if (self.checkCollision(self.player)):
+            self.player.addDamage(self.damage)
+
+class Stone(Obstacle):
+    def __init__(self, player: Player) -> None:
+        damage = 1
+
+        surface = Surface(8, 3)
+
+        surface.setImage("""\
+   .-^\\
+ _/  \\_\\
+/  \\ / /
+""")
+
+        surface.fillColor(Color.DARK_GRAY, Color.DEFAULT_BACKGROUND_COLOR)
+
+        super().__init__(surface, player, damage=damage)
+
+class Tree(Obstacle):
+    def __init__(self, player: Player) -> None:
+        damage = 1
+
+        surface = Surface(8, 8)
+
+        surface.setImage("""\
+ (￣￣)
+/ ( ^) \\
+ (_^ _)
+   ||
+   ||
+   ||
+   ||
+   ||
+""")
+        surface.fillColor(Color.GREEN, Color.DEFAULT_BACKGROUND_COLOR, x=0, y=0, width=8, height=3)
+        surface.fillColor(Color.DARK_YELLOW, Color.DEFAULT_BACKGROUND_COLOR, x=0, y=3, width=8, height=5)
+
+        super().__init__(surface, player, damage=damage)
