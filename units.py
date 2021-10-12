@@ -118,7 +118,7 @@ class Player(AnimationUnit):
         self.velocity.y += self.gravity * deltaTime
 
         for ground in self.grounds:
-            if (self.checkCollision(ground)):
+            if (self.checkGroundCollision(ground)):
                 self.position.y = ground.position.y - self.height
                 self.velocity = Vecotr(self.velocity.x, 0)
                 self.jumpCount = self.maxJumpCount
@@ -136,6 +136,20 @@ class Player(AnimationUnit):
         else:
             self.space = True
     
+    def checkGroundCollision(self, ground: "Ground"):
+        if (self.velocity.y < 0):
+            return False
+
+        surface = Surface(self.width, 1)
+        playerBottomUnit = Unit(surface)
+        playerBottomUnit.position = self.position + Vecotr(0, self.height - 2)
+
+        surface = Surface(ground.width, 1)
+        groundTopUnit = Unit(surface)
+        groundTopUnit.position = ground.position
+
+        return playerBottomUnit.checkCollision(groundTopUnit)
+
     def jump(self):
         if (self.jumpCount > 0):
             self.velocity = Vecotr(0, -1) * self.jumpForce
