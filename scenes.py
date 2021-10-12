@@ -85,13 +85,13 @@ class RunningScene(Scene):
         self.screen.fill(" ")
 
         for ground in self.grounds:
-            ground.draw(self.screen)
+            ground.draw(self.screen, False)
 
         for item in self.items:
-            item.draw(self.screen)
+            item.draw(self.screen, False)
         
         for obstacle in self.obstacles:
-            obstacle.draw(self.screen)
+            obstacle.draw(self.screen, False)
 
         self.player.draw(self.screen, False)
 

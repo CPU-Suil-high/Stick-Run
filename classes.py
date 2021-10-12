@@ -34,7 +34,7 @@ class Surface:
                 break
 
             for j in range(surface.width):
-                if (x + j < 0 or (not space and surface.image[i][j] == Char(b" "))):
+                if (x + j < 0 or (not space and surface.image[i][j].byte == b" ")):
                     continue
                 elif (x + j >= self.width):
                     break

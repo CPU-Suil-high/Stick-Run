@@ -64,7 +64,7 @@ class AnimationUnit(Unit):
         self.surface = self.surfaces[int(self.surfaceIndex)].clone()
 
 class Player(AnimationUnit):
-    def __init__(self, grounds: "List[Ground]", maxHealth: int=10, gravity: int = 0, jumpForce : float = 0, score: int=0) -> None:
+    def __init__(self, grounds: "List[Ground]", maxHealth: int = 10, gravity: int = 0, maxJumpCount: int = 2, jumpForce : float = 0, maxInvulnerableTime: float = 2, score: int=0) -> None:
         surfaces = [Surface(6, 5) for _ in range(4)]
         surfaces[0].setImage("""\
  _O_\\   
@@ -107,11 +107,15 @@ class Player(AnimationUnit):
 
         self.jumpForce = jumpForce
         self.jumpCount = 0
-        self.maxJumpCount = 2
+        self.maxJumpCount = maxJumpCount
 
         self.score = score
         self.maxHealth = maxHealth
         self.health = maxHealth
+        
+        self.isInvulnerable = False
+        self.maxInvulnerableTime = maxInvulnerableTime
+        self.curInvulnerableTime = 0
     
     def update(self, deltaTime):
         super().update(deltaTime)
@@ -122,9 +126,20 @@ class Player(AnimationUnit):
                 self.position.y = ground.position.y - self.height
                 self.velocity = Vecotr(self.velocity.x, 0)
                 self.jumpCount = self.maxJumpCount
-        
-        self.surface.setImage(f"{self.health}")
-    
+
+        if (self.isInvulnerable):
+            self.curInvulnerableTime += deltaTime
+
+            if (self.curInvulnerableTime > self.maxInvulnerableTime):
+                self.curInvulnerableTime = 0
+                self.isInvulnerable = False
+            elif (self.curInvulnerableTime < 0.3):
+                self.surface.fillColor(Color.RED, Color.DEFAULT_BACKGROUND_COLOR)
+            elif (self.curInvulnerableTime % 0.5 <= 0.25):
+                self.surface.fillColor(Color.DARK_GRAY, Color.DEFAULT_BACKGROUND_COLOR)
+            else:
+                self.surface.fillColor(Color.WHITE, Color.DEFAULT_BACKGROUND_COLOR)
+
     def inputKey(self, deltaTime):
         state = getAsyncKeyState(VirtualKey.SPACE)
 
@@ -159,7 +174,10 @@ class Player(AnimationUnit):
         self.score += score
     
     def addDamage(self, damage: int):
+        if (self.isInvulnerable):
+            return
         self.health -= damage
+        self.isInvulnerable = True
 
 class Ground(Unit):
     def __init__(self, scene, patten: str="@", width: int=5, height: int=3) -> None:
