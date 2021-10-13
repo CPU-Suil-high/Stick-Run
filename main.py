@@ -5,8 +5,8 @@ import os
 
 from scenes import *
 
-WIDTH = 120
-HEIGHT = 30
+WIDTH = 140
+HEIGHT = 35
 
 FPS = 60
 

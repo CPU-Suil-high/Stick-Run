@@ -40,11 +40,11 @@ class RunningScene(Scene):
         self.player.position = Vecotr(5, (self.screen.height - 8)*2)
         self.speed = 15
 
-        self.healthBar = HealthBar(self.player, width=50, height=1)
+        self.healthBar = HealthBar(self.player, width=80, height=4)
         self.healthBar.position = Vecotr(2, 2)
 
         self.scoreNumber = Number(self.player.score)
-        self.scoreNumber.position = Vecotr(self.screen.width - self.scoreNumber.width - 1, 0)
+        self.scoreNumber.position = Vecotr(self.screen.width - self.scoreNumber.width - 1, 2)
 
         ground = Ground(self, "[]", 58, 3)
         ground.position = Vecotr(0, (self.screen.height - ground.height//2 - 1) * 2)
@@ -78,7 +78,7 @@ class RunningScene(Scene):
 
         self.healthBar.update(deltaTime)
         self.scoreNumber.setNumber(self.player.score)
-        self.scoreNumber.position = Vecotr(self.screen.width - self.scoreNumber.width - 1, 0)
+        self.scoreNumber.position = Vecotr(self.screen.width - self.scoreNumber.width - 1, 2)
     
     def inputKey(self, deltaTime: float):
         if (getPressedKey(VirtualKey.RIGHT)):

@@ -4,6 +4,11 @@ from classes import *
 from functions import *
 
 numberImageDict = {
+    "-":"""\
+   
+---
+   
+""",
     "0":"""\
  _  
 / \\
@@ -100,6 +105,8 @@ class Number(Unit):
     def __init__(self, number:int) -> None:
         surface = Surface(3, 3)
         super().__init__(surface)
+
+        self.setNumber(number)
     
     def setNumber(self, number:int):
         if (type(number) != int):
@@ -107,7 +114,7 @@ class Number(Unit):
 
         numberString = str(number)
         strLen = len(numberString)
-        self.surface = Surface(strLen*3 + strLen-1, 3)
+        self.surface = Surface(strLen*3, 3)
 
         self.width = self.surface.width
         self.height = self.surface.height*2
@@ -116,7 +123,7 @@ class Number(Unit):
         for i in range(strLen):
             image = numberImageDict[numberString[i]]
             tempSurface.setImage(image)
-            self.surface.blit(tempSurface, x=i*4, y=0, space=True)
+            self.surface.blit(tempSurface, x=i*3, y=0, space=True)
 
 class AnimationUnit(Unit):
     def __init__(self, surface: Surface, surfaces: List[Surface], animationSpeed) -> None:
@@ -258,12 +265,25 @@ class Player(AnimationUnit):
         self.isInvulnerable = True
 
 class HealthBar(Unit):
-    def __init__(self, player:Player, width:int=10, height:int=2, followingSpeed:float=2, maxFollowingDelay:float=0.5) -> None:
+    def __init__(self, player:Player, width:int=10, height:int=4, followingSpeed:float=2, maxFollowingDelay:float=0.5) -> None:
         surface = Surface(width, height)
         super().__init__(surface)
 
         self.player = player
 
+        self.slash = Unit(Surface(3, 3))
+        self.slash.surface.setImage("""\
+   
+ / 
+/  
+""")    
+        self.slash.position = Vecotr(self.width//2-self.slash.width//2 - 2, 0)
+
+        self.maxHealthNumber = Number(self.player.maxHealth)
+        self.maxHealthNumber.position = Vecotr(self.slash.position.x+self.slash.width, 0)
+
+        self.healthNumber = Number(self.player.health)
+        
         self.followingHealth = player.health
 
         self.followingSpeed = followingSpeed
@@ -296,15 +316,22 @@ class HealthBar(Unit):
 
         self.surface.fill(" ")
 
-        hpText = f"{self.player.health}/{self.player.maxHealth}"
-        hpTextSurface = Surface(len(hpText.encode("cp949")), 1)
-        hpTextSurface.setImage(hpText)  
-
-        self.surface.blit(hpTextSurface, self.width//2-hpTextSurface.width//2, 0, True)
+        self.updateSurfaceHealth()
 
         self.surface.fillColor(Color.WHITE, Color.DARK_GRAY)
-        self.surface.fillColor(Color.WHITE, Color.DARK_RED, x=0, y=0, width=followingWidth)
-        self.surface.fillColor(Color.WHITE, Color.RED, x=0, y=0, width=width)
+        self.surface.fillColor(Color.WHITE, Color.RED, x=0, y=0, width=followingWidth)
+        self.surface.fillColor(Color.WHITE, Color.DARK_RED, x=0, y=0, width=width)
+
+    def updateSurfaceHealth(self):
+        self.healthNumber.setNumber(self.player.health)
+
+        self.healthNumber.position = Vecotr(self.slash.position.x - self.healthNumber.width - 1, 0)
+
+        self.surface.fill(" ")
+
+        self.healthNumber.draw(self.surface)
+        self.slash.draw(self.surface)
+        self.maxHealthNumber.draw(self.surface)
 
 class Ground(Unit):
     def __init__(self, scene, patten: str="@", width: int=5, height: int=3) -> None:
