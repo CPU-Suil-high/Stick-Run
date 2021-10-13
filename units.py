@@ -3,6 +3,59 @@ from typing import *
 from classes import *
 from functions import *
 
+numberImageDict = {
+    "0":"""\
+ _  
+/ \\
+\\_/
+""",
+    "1":"""\
+   
+/| 
+ | 
+""",
+    "2":"""\
+__ 
+ _)
+/__
+""",
+    "3":"""\
+__ 
+ _)
+__)
+""",
+    "4":"""\
+   
+|_|
+  |
+""",
+    "5":"""\
+ _ 
+|_ 
+ _)
+""",
+    "6":"""\
+ _ 
+/_ 
+\_)
+""",
+    "7":"""\
+___
+  /
+ / 
+""",
+    "8":"""\
+ _ 
+(_)
+(_)
+""",
+    "9":"""\
+ _
+(_\\
+ _/
+""",
+}
+
 class Unit:
     def __init__(self, surface: Surface) -> None:
         self.surface = surface
@@ -42,6 +95,28 @@ class Unit:
             return True
         else:
             return False
+
+class Number(Unit):
+    def __init__(self, number:int) -> None:
+        surface = Surface(3, 3)
+        super().__init__(surface)
+    
+    def setNumber(self, number:int):
+        if (type(number) != int):
+            return
+
+        numberString = str(number)
+        strLen = len(numberString)
+        self.surface = Surface(strLen*3 + strLen-1, 3)
+
+        self.width = self.surface.width
+        self.height = self.surface.height*2
+
+        tempSurface = Surface(3, 3)
+        for i in range(strLen):
+            image = numberImageDict[numberString[i]]
+            tempSurface.setImage(image)
+            self.surface.blit(tempSurface, x=i*4, y=0, space=True)
 
 class AnimationUnit(Unit):
     def __init__(self, surface: Surface, surfaces: List[Surface], animationSpeed) -> None:
@@ -139,8 +214,6 @@ class Player(AnimationUnit):
                 self.surface.fillColor(Color.DARK_GRAY, Color.DEFAULT_BACKGROUND_COLOR)
             else:
                 self.surface.fillColor(Color.WHITE, Color.DEFAULT_BACKGROUND_COLOR)
-        
-        self.surface.setImage(f"{self.health}")
 
     def inputKey(self, deltaTime):
         state = getAsyncKeyState(VirtualKey.SPACE)
@@ -169,7 +242,10 @@ class Player(AnimationUnit):
 
     def jump(self):
         if (self.jumpCount > 0):
-            self.velocity = Vecotr(0, -1) * self.jumpForce
+            if (self.jumpCount == self.maxJumpCount):
+                self.velocity = Vecotr(0, -1) * self.jumpForce
+            else:
+                self.velocity = Vecotr(0, -1) * self.jumpForce / 4 * 3
             self.jumpCount -= 1
 
     def addScore(self, score: int):
@@ -219,15 +295,16 @@ class HealthBar(Unit):
             followingWidth = int((self.followingHealth/self.player.maxHealth) * self.surface.width)
 
         self.surface.fill(" ")
+
         hpText = f"{self.player.health}/{self.player.maxHealth}"
         hpTextSurface = Surface(len(hpText.encode("cp949")), 1)
-        hpTextSurface.setImage(hpText)
+        hpTextSurface.setImage(hpText)  
 
         self.surface.blit(hpTextSurface, self.width//2-hpTextSurface.width//2, 0, True)
 
-        self.surface.fillColor(Color.BLACK, Color.DARK_GRAY)
-        self.surface.fillColor(Color.BLACK, Color.DARK_RED, x=0, y=0, width=followingWidth)
-        self.surface.fillColor(Color.BLACK, Color.RED, x=0, y=0, width=width)
+        self.surface.fillColor(Color.WHITE, Color.DARK_GRAY)
+        self.surface.fillColor(Color.WHITE, Color.DARK_RED, x=0, y=0, width=followingWidth)
+        self.surface.fillColor(Color.WHITE, Color.RED, x=0, y=0, width=width)
 
 class Ground(Unit):
     def __init__(self, scene, patten: str="@", width: int=5, height: int=3) -> None:
