@@ -40,6 +40,9 @@ class RunningScene(Scene):
         self.player.position = Vecotr(5, (self.screen.height - 8)*2)
         self.speed = 15
 
+        self.healthBar = HealthBar(self.player, width=50, height=1)
+        self.healthBar.position = Vecotr(2, 2)
+
         ground = Ground(self, "[]", 58, 3)
         ground.position = Vecotr(0, (self.screen.height - ground.height//2 - 1) * 2)
         ground.velocity = Vecotr(-20, 0)
@@ -69,6 +72,8 @@ class RunningScene(Scene):
 
         self.killUnit(self.grounds)
         self.killUnit(self.items)
+
+        self.healthBar.update(deltaTime)
     
     def inputKey(self, deltaTime: float):
         if (getPressedKey(VirtualKey.RIGHT)):
@@ -94,6 +99,8 @@ class RunningScene(Scene):
             obstacle.draw(self.screen, False)
 
         self.player.draw(self.screen, False)
+
+        self.healthBar.draw(self.screen, True)
 
 class TestScene(Scene):
     def __init__(self, screen: Surface) -> None:

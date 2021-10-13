@@ -139,6 +139,8 @@ class Player(AnimationUnit):
                 self.surface.fillColor(Color.DARK_GRAY, Color.DEFAULT_BACKGROUND_COLOR)
             else:
                 self.surface.fillColor(Color.WHITE, Color.DEFAULT_BACKGROUND_COLOR)
+        
+        self.surface.setImage(f"{self.health}")
 
     def inputKey(self, deltaTime):
         state = getAsyncKeyState(VirtualKey.SPACE)
@@ -178,6 +180,54 @@ class Player(AnimationUnit):
             return
         self.health -= damage
         self.isInvulnerable = True
+
+class HealthBar(Unit):
+    def __init__(self, player:Player, width:int=10, height:int=2, followingSpeed:float=2, maxFollowingDelay:float=0.5) -> None:
+        surface = Surface(width, height)
+        super().__init__(surface)
+
+        self.player = player
+
+        self.followingHealth = player.health
+
+        self.followingSpeed = followingSpeed
+
+        self.followingDelay = 0
+        self.maxFollowingDelay = maxFollowingDelay
+
+    def update(self, deltaTime):
+        super().update(deltaTime)
+        
+        self.updateHealth(deltaTime)
+    
+    def updateHealth(self, deltaTime):
+
+        if (self.player.health < self.followingHealth):
+            if (self.followingDelay < self.maxFollowingDelay):
+                self.followingDelay += deltaTime
+            else:
+                self.followingHealth -= deltaTime * self.followingSpeed
+        else:
+            self.followingHealth = self.player.health
+            self.followingDelay = 0
+
+        if (self.player.health < 0):
+            width = 0
+            followingWidth = 0
+        else:
+            width = int((self.player.health/self.player.maxHealth) * self.surface.width)
+            followingWidth = int((self.followingHealth/self.player.maxHealth) * self.surface.width)
+
+        self.surface.fill(" ")
+        hpText = f"{self.player.health}/{self.player.maxHealth}"
+        hpTextSurface = Surface(len(hpText.encode("cp949")), 1)
+        hpTextSurface.setImage(hpText)
+
+        self.surface.blit(hpTextSurface, self.width//2-hpTextSurface.width//2, 0, True)
+
+        self.surface.fillColor(Color.BLACK, Color.DARK_GRAY)
+        self.surface.fillColor(Color.BLACK, Color.DARK_RED, x=0, y=0, width=followingWidth)
+        self.surface.fillColor(Color.BLACK, Color.RED, x=0, y=0, width=width)
 
 class Ground(Unit):
     def __init__(self, scene, patten: str="@", width: int=5, height: int=3) -> None:
@@ -287,7 +337,7 @@ class Obstacle(Unit):
 
 class Stone(Obstacle):
     def __init__(self, player: Player) -> None:
-        damage = 1
+        damage = 2
 
         surface = Surface(8, 3)
 
@@ -303,7 +353,7 @@ class Stone(Obstacle):
 
 class Tree(Obstacle):
     def __init__(self, player: Player) -> None:
-        damage = 1
+        damage = 2
 
         surface = Surface(8, 8)
 

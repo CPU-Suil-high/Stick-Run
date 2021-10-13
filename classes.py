@@ -6,17 +6,31 @@ class Surface:
 
         self.image = [[Char(b" ", False, False) for j in range(width)] for i in range(height)]
     
-    def fill(self, char:str):
+    def fill(self, char:str, x:int=0, y:int=0, width:int=-1, height:int=-1):
         if (len(char) != 1):
             raise "char's len must be 1"
         
-        for i in range(self.height):
-            for j in range(self.width):
+        if (width < 0):
+            width = self.width
+        if (height < 0):
+            height = self.height
+
+        for i in range(y, self.height):
+            if (i >= y + height):
+                break
+            for j in range(x, self.width):
+                if (j >= x + width):
+                    break
                 self.image[i][j].byte = char.encode("cp949")
                 self.image[i][j].start = False
                 self.image[i][j].end = False
     
-    def fillColor(self, textColor:Color, backgroundColor:Color, x:int=0, y:int=0, width:int=100, height:int=100):
+    def fillColor(self, textColor:Color, backgroundColor:Color, x:int=0, y:int=0, width:int=-1, height:int=-1):
+        if (width < 0):
+            width = self.width
+        if (height < 0):
+            height = self.height
+
         for i in range(y, self.height):
             if (i >= y + height):
                 break
@@ -60,6 +74,8 @@ class Surface:
             for j in range(self.width):
                 if (len(image[i]) <= j):
                     break
+                image[i][j].textColor = self.image[i][j].textColor
+                image[i][j].backgroundColor = self.image[i][j].backgroundColor
                 self.image[i][j] = image[i][j]
     
     def clone(self):
