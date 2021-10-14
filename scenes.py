@@ -36,7 +36,7 @@ class RunningScene(Scene):
         self.items = []
         self.obstacles = []
 
-        self.player = Player(self.grounds, gravity=120, jumpForce=65)
+        self.player = Player(self.grounds, self.screen.height*2, gravity=120, jumpForce=65)
         self.player.position = Vecotr(5, (self.screen.height - 8)*2)
         self.speed = 15
 

@@ -146,7 +146,7 @@ class AnimationUnit(Unit):
         self.surface = self.surfaces[int(self.surfaceIndex)].clone()
 
 class Player(AnimationUnit):
-    def __init__(self, grounds: "List[Ground]", maxHealth: int = 10, gravity: int = 0, maxJumpCount: int = 2, jumpForce : float = 0, maxInvulnerableTime: float = 2, score: int=0) -> None:
+    def __init__(self, grounds: "List[Ground]", maxYPos:int, maxHealth: int = 10, gravity: int = 0, maxJumpCount: int = 2, jumpForce : float = 0, maxInvulnerableTime: float = 2, score: int=0) -> None:
         surfaces = [Surface(6, 5) for _ in range(4)]
         surfaces[0].setImage("""\
  _O_\\   
@@ -183,6 +183,8 @@ class Player(AnimationUnit):
 
         super().__init__(surface, surfaces, animationSpeed)
 
+        self.maxYPos = maxYPos
+
         self.grounds = grounds
 
         self.gravity = gravity
@@ -209,6 +211,26 @@ class Player(AnimationUnit):
                 self.velocity = Vecotr(self.velocity.x, 0)
                 self.jumpCount = self.maxJumpCount
 
+        self.updateInvulnerable(deltaTime)
+
+        if (self.position.y >= self.maxYPos):
+            self.velocity = Vecotr(0, -1) * self.jumpForce * 1.1
+            self.jumpCount = self.maxJumpCount - 1
+
+            self.addDamage(self.maxHealth//5)
+
+    def inputKey(self, deltaTime):
+        state = getAsyncKeyState(VirtualKey.SPACE)
+
+        if (getAsyncKeyState(VirtualKey.SPACE) & 0x8000 and not self.space):
+            self.jump()
+
+        if (state == 0):
+            self.space = False
+        else:
+            self.space = True
+    
+    def updateInvulnerable(self, deltaTime):
         if (self.isInvulnerable):
             self.curInvulnerableTime += deltaTime
 
@@ -222,17 +244,6 @@ class Player(AnimationUnit):
             else:
                 self.surface.fillColor(Color.WHITE, Color.DEFAULT_BACKGROUND_COLOR)
 
-    def inputKey(self, deltaTime):
-        state = getAsyncKeyState(VirtualKey.SPACE)
-
-        if (getAsyncKeyState(VirtualKey.SPACE) & 0x8000 and not self.space):
-            self.jump()
-
-        if (state == 0):
-            self.space = False
-        else:
-            self.space = True
-    
     def checkGroundCollision(self, ground: "Ground"):
         if (self.velocity.y < 0):
             return False
@@ -252,7 +263,7 @@ class Player(AnimationUnit):
             if (self.jumpCount == self.maxJumpCount):
                 self.velocity = Vecotr(0, -1) * self.jumpForce
             else:
-                self.velocity = Vecotr(0, -1) * self.jumpForce / 4 * 3
+                self.velocity = Vecotr(0, -1) * self.jumpForce / 6 * 5
             self.jumpCount -= 1
 
     def addScore(self, score: int):
