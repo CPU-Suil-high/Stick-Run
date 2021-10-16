@@ -14,7 +14,7 @@ def main():
     global screen, copyScreen
     init()
 
-    curScene = RunningScene(screen)
+    curScene = StartScene(screen)
 
     while True:
         deltaTime = delay()
@@ -27,6 +27,9 @@ def main():
         updateDisplay()
 
         curScene = curScene.nextScene
+
+        if (curScene == None):
+            break
 
 def init():
     global screen, copyScreen, previousTime, delayTime

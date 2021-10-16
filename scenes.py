@@ -3,6 +3,7 @@ from functions import *
 from units import *
 
 import sys
+import msvcrt
 
 class Scene:
     def __init__(self, screen:Surface) -> None:
@@ -17,6 +18,12 @@ class Scene:
 
     def render(self):
         pass
+    
+    def switchScene(self, scene:"Scene"):
+        self.nextScene = scene
+
+    def stop(self):
+        self.nextScene = None
 
     def killUnit(self, units):
         i = 0
@@ -79,6 +86,9 @@ class RunningScene(Scene):
         self.healthBar.update(deltaTime)
         self.scoreNumber.setNumber(self.player.score)
         self.scoreNumber.position = Vecotr(self.screen.width - self.scoreNumber.width - 1, 2)
+
+        if (self.player.health <= 0):
+            self.switchScene(StartScene(self.screen))
     
     def inputKey(self, deltaTime: float):
         if (getPressedKey(VirtualKey.RIGHT)):
@@ -93,6 +103,7 @@ class RunningScene(Scene):
     
     def render(self):
         self.screen.fill(" ")
+        self.screen.fillColor(textColor=Color.DEFAULT_TEXT_COLOR, backgroundColor=Color.DEFAULT_BACKGROUND_COLOR)
 
         for ground in self.grounds:
             ground.draw(self.screen, False)
@@ -109,47 +120,58 @@ class RunningScene(Scene):
 
         self.scoreNumber.draw(self.screen, True)
 
-class TestScene(Scene):
+class StartScene(Scene):
     def __init__(self, screen: Surface) -> None:
         super().__init__(screen)
-        surface = Surface(16, 4)
-        surface.setImage("""\
-┏━━━━━━┓
-┃Hello, World┃
-┃I have a pen┃
-┗━━━━━━┛
-\
-""")
-        self.aing = Unit(surface)
 
-        surface = Surface(4, 4)
-        surface.setImage("asdf\nasdf\nasdf\nasdf")
-        self.sans = Unit(surface)
-        self.sans.position = Vecotr(self.screen.width//2, self.screen.height//2)
+        self.title = Title()
+        self.title.position = Vecotr(self.screen.width//2 - self.title.width//2, 4)
 
-        self.speed = 10
+        self.buttons = []
+        self.selectIndex = 0
 
-    def update(self, deltaTime:float):        
-        self.sans.surface.setImage(f"{self.sans.position.x}\n{self.sans.position.y}\nasdf\nasdf")
-        self.aing.surface.setImage(f"""\
-┏━━━━━━┓
-┃{self.sans.checkCollision(self.aing)}┃
-┃{self.aing.position.x}┃
-┗{self.aing.position.y}━━━━━━┛
-\
-""")
+        playButton = Button(self.play, width=10, name="Play")
+        playButton.position = Vecotr(self.screen.width//2 - playButton.width//2, self.title.position.y + self.title.height + 15)
+        self.buttons.append(playButton)
+
+        optionButton = Button(lambda : None, width=10, name="Option")
+        optionButton.position = Vecotr(self.screen.width//2 - optionButton.width//2, playButton.position.y + playButton.height + 6)
+        self.buttons.append(optionButton)
+
+        exitButton = Button(self.stop, width=10, name="Exit")
+        exitButton.position = Vecotr(self.screen.width//2 - exitButton.width//2, optionButton.position.y + optionButton.height + 6)
+        self.buttons.append(exitButton)
+
+        self.buttons[0].select(True)
+    
+    def play(self):
+        self.switchScene(RunningScene(self.screen))
+
+    def update(self, deltaTime: float):
+        pass
 
     def inputKey(self, deltaTime: float):
-        if (getPressedKey(VirtualKey.RIGHT)):
-            self.aing.position.x += deltaTime * self.speed
-        if (getPressedKey(VirtualKey.LEFT)):
-            self.aing.position.x -= deltaTime * self.speed
-        if (getPressedKey(VirtualKey.DOWN)):
-            self.aing.position.y += deltaTime * self.speed
-        if (getPressedKey(VirtualKey.UP)):
-            self.aing.position.y -= deltaTime * self.speed
-    
+        while (msvcrt.kbhit()):
+            key = msvcrt.getch()
+
+            if (key == b"w" or key == b"W"):
+                self.buttons[self.selectIndex].select(False)
+                self.selectIndex -= 1
+            elif (key == b"s" or key == b"S"):
+                self.buttons[self.selectIndex].select(False)
+                self.selectIndex += 1
+            elif (key == b" "):
+                self.buttons[self.selectIndex].click()
+        
+        self.selectIndex %= len(self.buttons)
+
+        self.buttons[self.selectIndex].select(True)
+
     def render(self):
         self.screen.fill(" ")
-        self.aing.draw(self.screen)
-        self.sans.draw(self.screen)
+        self.screen.fillColor(textColor=Color.DEFAULT_TEXT_COLOR, backgroundColor=Color.DEFAULT_BACKGROUND_COLOR)
+        
+        self.title.draw(self.screen, False)
+        
+        for button in self.buttons:
+            button.draw(self.screen, False)

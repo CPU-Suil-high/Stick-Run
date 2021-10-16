@@ -1,3 +1,4 @@
+import msvcrt
 import random
 from typing import *
 from classes import *
@@ -220,15 +221,10 @@ class Player(AnimationUnit):
             self.addDamage(self.maxHealth//5)
 
     def inputKey(self, deltaTime):
-        state = getAsyncKeyState(VirtualKey.SPACE)
-
-        if (getAsyncKeyState(VirtualKey.SPACE) & 0x8000 and not self.space):
-            self.jump()
-
-        if (state == 0):
-            self.space = False
-        else:
-            self.space = True
+        while (msvcrt.kbhit()):
+            key = msvcrt.getch()
+            if (key == b" "):
+                self.jump()
     
     def updateInvulnerable(self, deltaTime):
         if (self.isInvulnerable):
@@ -268,11 +264,15 @@ class Player(AnimationUnit):
 
     def addScore(self, score: int):
         self.score += score
-    
+
     def addDamage(self, damage: int):
         if (self.isInvulnerable):
             return
         self.health -= damage
+        
+        if (self.health < 0):
+            self.health = 0
+
         self.isInvulnerable = True
 
 class HealthBar(Unit):
@@ -486,3 +486,40 @@ class Tree(Obstacle):
         surface.fillColor(Color.DARK_YELLOW, Color.DEFAULT_BACKGROUND_COLOR, x=0, y=3, width=8, height=5)
 
         super().__init__(surface, player, damage=damage)
+
+class Title(Unit):
+    def __init__(self) -> None:
+        surface = Surface(48, 6)
+
+        surface.setImage("""\
+  _____ _   _      _          _____             
+ / ____| | (_)    | |        |  __ \            
+| (___ | |_ _  ___| | __     | |__) |   _ _ __  
+ \___ \| __| |/ __| |/ /     |  _  / | | | '_ \ 
+ ____) | |_| | (__|   <      | | \ \ |_| | | | |
+|_____/ \__|_|\___|_|\_\     |_|  \_\__,_|_| |_|
+""")
+        super().__init__(surface)
+
+class Button(Unit):
+    def __init__(self, func:Callable, args:List=[], width:int=10, name:str="button") -> None:
+        surface = Surface(width, 1)
+        super().__init__(surface)
+        
+        temp = Surface(len(name.encode("cp949")), 1)
+        temp.setImage(name)
+        self.surface.blit(temp, self.surface.width//2 - temp.width//2, 0)
+
+        self.func = func
+        self.args = args
+
+    def select(self, isSelected:bool):
+        if (isSelected):
+            self.surface.fill("[", 0, 0, 1, 1)
+            self.surface.fill("]", self.surface.width-1, 0, 1, 1)
+        else:
+            self.surface.fill(" ", 0, 0, 1, 1)
+            self.surface.fill(" ", self.surface.width-1, 0, 1, 1)
+    
+    def click(self):
+        self.func(*self.args)
